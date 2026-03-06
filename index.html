@@ -1,28 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>WebAR Industrial Overlay - PS4 Controller</title>
+
   <!-- Importando A-Frame e AR.js -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
   <script>
-    // Script para transformar o modelo em silhueta verde (Wireframe )
+    // Componente para criar o efeito de silhueta verde (estilo FabStation )
     AFRAME.registerComponent('industrial-overlay', {
       init: function () {
         this.el.addEventListener('model-loaded', () => {
           const obj = this.el.getObject3D('mesh');
           obj.traverse((node) => {
             if (node.isMesh) {
-              // Criando o material verde transparente estilo "FabStation"
+              // Aplicando o material verde transparente com linhas (wireframe)
               node.material = new THREE.MeshBasicMaterial({
                 color: 0x00FF00,    // Verde fluorescente
-                wireframe: true,    // Apenas as linhas (silhueta)
-                transparent: true,  // Permite ver através
-                opacity: 0.5,       // 50% de transparência
-                side: THREE.DoubleSide // Garante que vemos os dois lados da malha
+                wireframe: true,    // Apenas as linhas da malha
+                transparent: true,  // Permite ver o objeto real por baixo
+                opacity: 0.6,       // Ajuste a visibilidade aqui (0 a 1)
+                side: THREE.DoubleSide
               });
             }
           });
@@ -30,29 +32,57 @@
       }
     });
   </script>
+
+  <style>
+    /* Remove qualquer margem e garante que a câmera ocupe a tela toda */
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .arjs-loader {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+  </style>
 </head>
 
-<body style="margin: 0px; overflow: hidden;">
+<body>
+  <!-- Mensagem de carregamento (opcional) -->
+  <div class="arjs-loader" id="loader">
+    <div>Carregando Experiência AR...</div>
+  </div>
+
   <!-- Cena de Realidade Aumentada -->
-  <!-- 'sourceType: webcam' ativa a câmera do celular -->
+  <!-- vr-mode-ui="enabled: false" REMOVE O BOTÃO VR QUE DAVA TELA PRETA -->
   <a-scene embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-    renderer="logarithmicDepthBuffer: true;">
+    vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true;">
 
-    <!-- 1. Carregamento do Modelo 3D -->
+    <!-- 1. Carregamento dos Ativos (Seu modelo GLB) -->
     <a-assets>
-      <!-- SUBSTITUA O LINK ABAIXO PELO SEU ARQUIVO .GLB -->
-      <a-asset-item id="meu-modelo" src="./ps4.glb"></a-asset-item>
+      <!-- O arquivo ps4.glb deve estar na mesma pasta deste index.html -->
+      <a-asset-item id="ps4-model" src="./ps4.glb"></a-asset-item>
     </a-assets>
 
     <!-- 2. O Marcador (Âncora) -->
-    <!-- Quando a câmera ler o marcador 'hiro', o modelo aparece -->
-    <a-marker preset="hiro">
+    <!-- Usando o marcador padrão 'hiro' para o seu primeiro teste -->
+    <a-marker preset="hiro" id="marker">
 
-      <!-- 3. O Modelo com o componente de silhueta verde -->
-      <!-- scale: ajuste conforme o tamanho real do seu controle -->
+      <!-- 3. O Modelo 3D com o efeito de silhueta verde -->
+      <!-- scale: ajuste conforme o tamanho real (ex: 0.16 para 16cm) -->
       <!-- position: ajuste para alinhar com o marcador físico -->
-      <a-entity gltf-model="#meu-modelo" industrial-overlay scale="1 1 1" position="0 0 0" rotation="0 0 0">
+      <a-entity id="controller-overlay" gltf-model="#ps4-model" industrial-overlay scale="1 1 1" position="0 0 0"
+        rotation="0 0 0">
       </a-entity>
 
     </a-marker>
@@ -61,6 +91,13 @@
     <a-entity camera></a-entity>
 
   </a-scene>
+
+  <script>
+    // Esconde o loader quando a cena estiver pronta
+    window.addEventListener('arjs-video-loaded', () => {
+      document.getElementById('loader').style.display = 'none';
+    });
+  </script>
 </body>
 
 </html>
